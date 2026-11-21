@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CICADA 2026 | End-to-End Secure AIOps Observability</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Navigation & Global Meta -->
+  <header class="app-header">
+    <div class="brand-wrapper">
+      <div class="brand-logo">
+        <span>⚡ CICADA 2026</span>
+        <span class="brand-badge">AIOps Observability</span>
+      </div>
+      <span style="color: var(--text-dim); font-size: 0.8rem;">TechForcz &times; Atria 24h Hackathon</span>
+    </div>
+
+    <div class="header-meta">
+      <div class="meta-item">
+        <span>Tenant:</span>
+        <select id="tenantSelect" style="background:#0f172a; color:#fff; border:1px solid #334155; padding:3px 8px; border-radius:4px; font-size:0.78rem;">
+          <option value="tenant-acme-prod">tenant-acme-prod (Primary)</option>
+          <option value="tenant-fintech-global">tenant-fintech-global</option>
+          <option value="tenant-healthnet">tenant-healthnet</option>
+        </select>
+      </div>
+
+      <div class="meta-item">
+        <span>Region:</span>
+        <span class="meta-value" style="color: var(--accent-cyan);">ap-south-1 (Mumbai)</span>
+      </div>
+
+      <div class="meta-item">
+        <span>UTC Time:</span>
+        <span class="meta-value" id="clockUtc">--:--:-- UTC</span>
+      </div>
+
+      <div class="meta-item">
+        <span class="badge-live" id="livePill">REAL-TIME SSE ONLINE</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Judge Live Scenario Injector Toolbar (The 8 Mandatory Judge Scenarios) -->
+    <div class="chaos-deck">
+      <div class="chaos-title">
+        <span>🎯 Judge Live Validation Scenarios (8 Scenarios & Chaos Injector)</span>
+        <span style="font-size: 0.72rem; color: var(--text-dim);">Section 8 Evaluation Testing Suite</span>
+      </div>
+      <div class="chaos-buttons-grid">
+        <button class="btn-chaos" onclick="injectScenario('1_SECRET_LOG')">
+          <span class="chaos-number">Scenario 1</span>
+          <span>🔑 Inject Secret in Raw Log</span>
+        </button>
+
+        <button class="btn-chaos" id="btnOutage" onclick="injectScenario('2_OUTAGE_BUFFER')">
+          <span class="chaos-number">Scenario 2</span>
+          <span>⚡ Sever SaaS Link (Buffer)</span>
+        </button>
+
+        <button class="btn-chaos" onclick="injectScenario('3_FAILED_LOGINS')">
+          <span class="chaos-number">Scenario 3</span>
+          <span>🛡️ Failed Logins (Brute Force)</span>
+        </button>
+
+        <button class="btn-chaos" onclick="injectScenario('4_LATENCY_SPIKE')">
+          <span class="chaos-number">Scenario 4</span>
+          <span>🌐 Network Latency Spike</span>
+        </button>
+
+        <button class="btn-chaos" onclick="injectScenario('5_CPU_ANOMALY')">
+          <span class="chaos-number">Scenario 5</span>
+          <span>📈 CPU / Memory Anomaly</span>
+        </button>
+
+        <button class="btn-chaos" onclick="injectScenario('6_MULTI_ALERT_STORM')">
+          <span class="chaos-number">Scenario 6</span>
+          <span>🔀 Multi-Alert Storm (Correlation)</span>
+        </button>
+
+        <button class="btn-chaos" onclick="injectScenario('7_DUPLICATE_PAYLOAD')">
+          <span class="chaos-number">Scenario 7</span>
+          <span>🔄 Duplicate Payload Test</span>
+        </button>
+
+        <button class="btn-chaos btn-reset" onclick="injectScenario('8_RESET_NORMAL')">
+          <span class="chaos-number">Reset</span>
+          <span>↺ Restore Normal Baselines</span>
+        </button>
+      </div>
+
+      <div class="toast-banner" id="chaosNotification" style="display: none;">
+        <span>▶</span>
+        <span id="chaosMessage">Scenario execution status...</span>
+      </div>
+    </div>
+
+    <!-- Section 2 Performance Targets KPI Grid -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">Collection-to-Dashboard Latency (p95)</div>
+        <div class="kpi-value" id="kpiLatency">0.8s</div>
+        <div class="kpi-sub">Target: &le; 10s at 95th percentile &bull; MET</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">Threshold Breach to Alert Raised</div>
+        <div class="kpi-value" id="kpiAlertSpeed">1.4s</div>
+        <div class="kpi-sub">Target: &le; 15s in-memory stream &bull; MET</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">Collector Offline Watchdog</div>
+        <div class="kpi-value" id="kpiHeartbeatWatchdog">10s Heartbeat</div>
+        <div class="kpi-sub" id="kpiWatchdogSub">Target: &le; 60s auto-downgrade to Poor</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">Post-Outage Backlog Reliability</div>
+        <div class="kpi-value" id="kpiBacklog">0 Lost / 0 Dup</div>
+        <div class="kpi-sub">Idempotent SQLite WAL &bull; Zero Loss</div>
+      </div>
+    </div>
+
+    <!-- Main Grid: Four-State Health and Real-time Telemetry -->
+    <div class="dashboard-grid">
+      
+      <!-- Four-State Health Status Hero -->
+      <div class="health-hero-card">
+        <div>
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">
+            Product Health Classification
+          </div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">
+            Section 4: Configurable 4-state evaluation
+          </div>
+        </div>
+
+        <div class="health-badge-large state-EXCELLENT" id="healthHeroBadge">
+          <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Operational Health</span>
+          <div class="health-state-text" id="healthStateText">EXCELLENT</div>
+          <div class="health-reason-text" id="healthReasonText">
+            All telemetry metrics within expected baselines. Collector online.
+          </div>
+        </div>
+
+        <!-- Collector Status Pill -->
+        <div style="background:#0b111e; border:1px solid #1e293b; border-radius:8px; padding:12px; font-size:0.75rem;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <span style="color:var(--text-dim);">Collector Daemon:</span>
+            <span id="colStatusPill" style="color:var(--accent-emerald); font-weight:700;">ONLINE (v2.4.0)</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <span style="color:var(--text-dim);">Collector Buffer Queue:</span>
+            <span id="colQueueCount" style="font-family:var(--font-mono); font-weight:700;">0 buffered</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:var(--text-dim);">Local Secrets Scrubbed:</span>
+            <span id="colRedactionsCount" style="color:var(--accent-cyan); font-weight:700;">0 scrubbed</span>
+          </div>
+        </div>
+
+        <!-- Health Transition Event Log -->
+        <div class="history-box">
+          <div class="history-title">UTC State Transition History</div>
+          <div id="transitionHistoryList">
+            <div style="color: var(--text-dim); font-size: 0.72rem;">No transitions recorded yet.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-time Telemetry Metrics Grid -->
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">CPU Utilization (%)</span>
+            <span class="chart-current" id="curCpu">24.5%</span>
+          </div>
+          <canvas class="metric-canvas" id="canvasCpu"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Memory Allocation (%)</span>
+            <span class="chart-current" id="curMemory">44.2%</span>
+          </div>
+          <canvas class="metric-canvas" id="canvasMemory"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Network Round-Trip Latency (ms)</span>
+            <span class="chart-current" id="curLatency">18.2ms</span>
+          </div>
+          <canvas class="metric-canvas" id="canvasLatency"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Packet Loss & Error Rate (%)</span>
+            <span class="chart-current" id="curLoss">0.0%</span>
+          </div>
+          <canvas class="metric-canvas" id="canvasLoss"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MANDATORY EVALUATION REQUIREMENT: The Egress Proof Panel -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">
+          <span>🛡️ The Egress Proof Panel (Mandatory Evaluation Check)</span>
+        </div>
+        <div style="display:flex; align-items:center; gap: 10px;">
+          <span style="font-size:0.75rem; color:var(--text-dim);">Inspect recent payload:</span>
+          <select id="proofSelector" style="background:#0f172a; color:#fff; border:1px solid #334155; padding:3px 8px; border-radius:4px; font-size:0.75rem;" onchange="renderSelectedProof()">
+            <option value="latest">Latest Ingestion Tick</option>
+          </select>
+        </div>
+      </div>
+
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px;">
+        Judges can verify live: raw logs, passwords, API tokens, and internal private IPs remain 100% local on the customer side. Only allow-listed metadata leaves the boundary.
+      </p>
+
+      <div class="egress-proof-wrapper">
+        <!-- Customer Environment (Tier 1) -->
+        <div class="proof-column">
+          <div class="proof-header">
+            <span class="proof-badge-tier1">Tier 1: Customer Environment (Local Host)</span>
+            <span style="font-size:0.72rem; color:var(--text-dim);">Raw Unredacted Input</span>
+          </div>
+          <pre class="code-view" id="proofRawLog">// Awaiting raw telemetry sample...</pre>
+          <div style="margin-top: 8px; font-size: 0.72rem; color: #fb7185;" id="proofRedactionSummary">
+            Detected Secrets: None
+          </div>
+        </div>
+
+        <!-- SaaS Platform (Tier 2) -->
+        <div class="proof-column">
+          <div class="proof-header">
+            <span class="proof-badge-tier2">Tier 2: Central SaaS Platform (Metadata Only)</span>
+            <span style="font-size:0.72rem; color:var(--text-dim);">Allow-Listed Egress Payload</span>
+          </div>
+          <pre class="code-view" id="proofEgressPayload">// Awaiting allow-listed egress payload...</pre>
+          <div style="margin-top: 8px; font-size: 0.72rem; color: #34d399;" id="proofEgressSummary">
+            Dropped Unapproved Fields: None
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Correlated Incidents & Explainable AIOps Drawer -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">
+          <span>🧠 Explainable AIOps & Incident Correlation (Weighted Higher in Phase 4)</span>
+        </div>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">
+          Multi-signal correlation &bull; Alert Noise Reduction &bull; Dynamic Baselines
+        </span>
+      </div>
+
+      <div id="incidentsContainer">
+        <div style="padding: 20px; text-align: center; color: var(--text-dim); font-size: 0.85rem;">
+          No active anomalies or correlated incidents. All system indicators operating within normal dynamic baseline.
+        </div>
+      </div>
+    </div>
+
+    <!-- Autonomous Ops Roadmap Stage 5: Safe Remediation & Rollback -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">
+          <span>🤖 Autonomous Ops Action Center (Stage 5 Roadmap: Safe, Human-Approved Remediation)</span>
+        </div>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">
+          Policy Bounds Checked &bull; Human-in-the-Loop &bull; 1-Click Rollback Plan
+        </span>
+      </div>
+
+      <div id="autonomousContainer">
+        <div style="padding: 16px; text-align: center; color: var(--text-dim); font-size: 0.85rem;">
+          No pending operational remediation actions.
+        </div>
+      </div>
+
+      <!-- Action Audit Trail -->
+      <div style="margin-top: 16px;">
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; margin-bottom: 8px;">
+          Signed Remediation Audit Trail
+        </div>
+        <div id="autonomousAuditList" style="max-height: 140px; overflow-y: auto; font-family: var(--font-mono); font-size: 0.74rem;">
+          <div style="color: var(--text-dim);">No executed remediations in current session.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

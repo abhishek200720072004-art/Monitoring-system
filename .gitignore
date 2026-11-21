@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# SQLite runtime databases and journals
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+
+# Runtime logs and transient audit files in data directories
+tier1_collector/data/*.sqlite*
+tier1_collector/data/*.log
+tier1_collector/data/*.json
+tier2_saas/data/*.sqlite*
+tier2_saas/data/*.log
+
+# Preserve data directories
+!tier1_collector/data/.gitkeep
+!tier2_saas/data/.gitkeep
+
+# Legacy backup
+_legacy_portfolio/
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,13 @@
+{
+  "name": "cicada-aiops-observability",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "CICADA 2026 24-Hour Hackathon - End-to-end, secure AIOps observability delivering autonomous insights across enterprise, data center, cloud, and distributed architectures",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --test"
+  },
+  "author": "CICADA 2026 Team",
+  "license": "Apache-2.0"
+}
